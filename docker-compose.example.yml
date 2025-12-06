@@ -1,0 +1,48 @@
+# This is an example docker-compose file.
+# For personal use, copy this to 'docker-compose.yml' and customize it.
+
+version: "3.7"
+services:
+  jellyrelayed:
+    # OPTION 1 (Default): Build from source
+    # This will build the Docker image locally from the Dockerfile in this directory.
+    # This is recommended if you are making changes to the code.
+    build: .
+
+    # OPTION 2: Use a pre-built image from a registry.
+    # Uncomment the line below and comment out the 'build: .' line above
+    # to use a pre-built image instead of building it yourself.
+    image: ghcr.io/tomhello56/jellyrelayed:latest
+
+    # container_name: jellyrelayed
+    
+    restart: unless-stopped
+
+    # Port mapping: <host_port>:<container_port>
+    # The application runs on port 5000 inside the container.
+    # You can change the first '5000' if you have a port conflict on your host.
+    ports:
+      - "5000:5000"
+
+    volumes:
+      # This volume is required. It maps a local folder to /data inside the container.
+      # The application stores its configuration file (config.json) here.
+      - ./config:/data
+      
+      # --- IMPORTANT ---
+      # MEDIA MOUNT: You must map your media library to the /media path inside the container.
+      # The paths used here MUST match the paths that Sonarr/Radarr use in their webhooks.
+      # Uncomment ONE of the examples below that matches your setup.
+
+      # LINUX / UNRAID / SYNOLOGY EXAMPLE:
+      # This maps a local folder '/mnt/user/media' to '/media' inside the container.
+      # Your Sonarr/Radarr paths should then be like '/media/tv' or '/media/movies'.
+      # - /mnt/user/media:/media
+
+      # WINDOWS EXAMPLE (e.g., mapping a J: drive):
+      # This maps your entire J: drive to '/media' inside the container.
+      # - "J:/:/media"
+      
+      # WINDOWS EXAMPLE (e.g., mapping a specific folder):
+      # This maps a specific folder on your C: drive to '/media' inside the container.
+      # - "C:/Users/YourUser/Documents/MyMedia:/media"

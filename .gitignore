@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment
+.env
+venv/
+.venv/
+
+# App Data & Configs (Secrets)
+config/
+jellyrelayed/
+docker-compose.yml
+*.sqlite3
+
+# Logs
+*.log
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Gemini
+.gemini/
+gha-creds-*.json

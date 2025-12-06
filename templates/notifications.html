@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('main.save') }}" method="POST">
+    <!-- Tab Buttons -->
+    <div class="mb-4 border-b border-gray-700">
+        <nav class="flex space-x-4" aria-label="Tabs">
+            <button type="button" id="tab-btn-type" onclick="switchTab('type')" class="px-3 py-2 font-medium text-sm rounded-t-lg border-b-2">
+                Type
+            </button>
+            <button type="button" id="tab-btn-episode" onclick="switchTab('episode')" class="px-3 py-2 font-medium text-sm rounded-t-lg border-b-2">
+                Episode Notifications
+            </button>
+            <button type="button" id="tab-btn-movie" onclick="switchTab('movie')" class="px-3 py-2 font-medium text-sm rounded-t-lg border-b-2">
+                Movie Notifications
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="content-type">
+        <input type="hidden" name="action" value="save_notifications">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-white"><i class="fa-solid fa-paper-plane mr-2"></i>Notification System Type Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs uppercase text-gray-400 mb-1">Pushover APP Token</label>
+                    <div class="relative">
+                        <input type="password" id="pushover_app_token" name="pushover_app_token" value="{{ config.pushover_app_token }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:border-purple-500 focus:outline-none pr-10">
+                        <button type="button" onclick="toggleVisibility('pushover_app_token')" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-white focus:outline-none">
+                            <i id="icon-pushover_app_token" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-400 mb-1">Pushover User Key</label>
+                    <div class="relative">
+                        <input type="password" id="pushover_user_key" name="pushover_user_key" value="{{ config.pushover_user_key }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:border-purple-500 focus:outline-none pr-10">
+                        <button type="button" onclick="toggleVisibility('pushover_user_key')" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-white focus:outline-none">
+                            <i id="icon-pushover_user_key" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="content-episode" class="hidden">
+        {% set type = 'episode' %}
+        {% include 'partials/_notification_form.html' %}
+    </div>
+    <div id="content-movie" class="hidden">
+        {% set type = 'movie' %}
+        {% include 'partials/_notification_form.html' %}
+    </div>
+
+    <div class="mt-6 flex justify-end">
+        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded shadow-lg transition transform hover:scale-105">
+            Save Settings
+        </button>
+    </div>
+</form>
+
+
+{% endblock %}
+
+{% block head_scripts %}
+<script>
+    const mockData = {
+        episode: {
+            prefix: '✨',
+            series_name: 'City Guard',
+            season_num: '01',
+            episode_num: '01',
+            episode_name: 'Team Bravo',
+            overview: 'They\'re two loose cannons, a detective who plays by the rules, and a K9 unit who *is* the rules. Together, they\'re cleaning up the streets, one paw print and one punch at a time!',
+            codec: 'x265',
+            filesize: '1.5 GB',
+            path: 'C:\\TV\\City Guard (2025)\\S01\\show-S01E01.mkv',
+            poster_url: "{{ url_for('static', filename='images/tvshow.png') }}"
+        },
+        movie: {
+            prefix: '✨',
+            movie_name: 'Neon Dominion',
+            movie_year: '2026',
+            overview: 'In a cosmos scarred by forgotten wars and whispered legends, a lone scavenger unearths a relic that hums with the song of a dying star. Now, hunted by shadowy factions and ancient artificial intelligences, they must decipher its secrets before the galaxy is plunged into a darkness older than time itself.',
+            codec: 'x265',
+            filesize: '17 GB',
+            path: 'C:\\Movies\\Neon Dominion (2026)\\movie.mkv',
+            poster_url: "{{ url_for('static', filename='images/movie.png') }}"
+        }
+    };
+
+    function updatePreview(type) {
+        const data = mockData[type];
+        const useEmojis = document.getElementById(`use_emojis_${type}`).checked;
+
+        const defaultEmojis = {
+            overview: "📝",
+            codec: "🎞️",
+            filesize: "💾",
+            path: "📁"
+        };
+        
+        const titleFormat = document.getElementById(`title_format_${type}`).value;
+        let title = titleFormat.replace(/{(\w+)}/g, (match, key) => data[key] || match);
+        document.getElementById(`preview-title-${type}`).innerText = title;
+
+        let bodyBlocks = [];
+        let overviewAdded = false;
+
+        if (document.getElementById(`include_overview_${type}`).checked) {
+            let overviewText = data.overview;
+            if (overviewText) {
+                let emoji = useEmojis ? defaultEmojis.overview : "";
+                bodyBlocks.push((emoji ? emoji + " " : "") + overviewText);
+                overviewAdded = true;
+            }
+        }
+
+        if (document.getElementById(`include_codec_${type}`).checked) {
+            let codecText = `Codec: ${data.codec}`;
+            let emoji = useEmojis ? defaultEmojis.codec : "";
+            bodyBlocks.push((emoji ? emoji + " " : "") + codecText);
+        }
+
+        if (document.getElementById(`include_filesize_${type}`).checked) {
+            let filesizeText = `Size: ${data.filesize}`;
+            let emoji = useEmojis ? defaultEmojis.filesize : "";
+            bodyBlocks.push((emoji ? emoji + " " : "") + filesizeText);
+        }
+
+        if (document.getElementById(`include_path_${type}`).checked) {
+            let pathText = `Path: ${data.path}`;
+            let emoji = useEmojis ? defaultEmojis.path : "";
+            bodyBlocks.push((emoji ? emoji + " " : "") + pathText);
+        }
+
+        let finalBodyHtml = '';
+        if (bodyBlocks.length > 0) {
+            let tempBlocks = [];
+            if (overviewAdded && (bodyBlocks.length - (overviewAdded ? 1 : 0)) > 0) {
+                tempBlocks.push(bodyBlocks[0]);
+                tempBlocks.push('');
+                tempBlocks = tempBlocks.concat(bodyBlocks.slice(1));
+            } else {
+                tempBlocks = bodyBlocks;
+            }
+            finalBodyHtml = tempBlocks.join('<br>');
+        }
+        document.getElementById(`preview-body-content-${type}`).innerHTML = finalBodyHtml;
+        document.getElementById(`preview-details-${type}`).innerHTML = '';
+
+
+        const previewPoster = document.getElementById(`preview-poster-display-${type}`);
+        previewPoster.src = type === 'episode' ? "{{ url_for('static', filename='images/tvshow.png') }}" : "{{ url_for('static', filename='images/movie.png') }}";
+        if (document.getElementById(`include_poster_${type}`).checked) {
+            previewPoster.classList.remove('hidden');
+        } else {
+            previewPoster.classList.add('hidden');
+        }
+    }
+    
+    async function sendTestNotification(type) {
+        const notificationOptions = {
+            title_format: document.getElementById(`title_format_${type}`).value,
+            include_overview: document.getElementById(`include_overview_${type}`).checked,
+            include_codec: document.getElementById(`include_codec_${type}`).checked,
+            include_filesize: document.getElementById(`include_filesize_${type}`).checked,
+            include_path: document.getElementById(`include_path_${type}`).checked,
+            include_poster: document.getElementById(`include_poster_${type}`).checked,
+            use_emojis: document.getElementById(`use_emojis_${type}`).checked
+        };
+
+        const defaultEmojis = {
+            overview: "📝",
+            codec: "🎞️",
+            filesize: "💾",
+            path: "📁"
+        };
+        notificationOptions.emoji_overview = defaultEmojis.overview;
+        notificationOptions.emoji_codec = defaultEmojis.codec;
+        notificationOptions.emoji_filesize = defaultEmojis.filesize;
+        notificationOptions.emoji_path = defaultEmojis.path;
+
+
+        const payload = {
+            type: type,
+            mock_item: mockData[type],
+            notification_options: notificationOptions
+        };
+
+        try {
+            const response = await fetch("{{ url_for('main.test_notification') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                displayAjaxFlashMessage(data.message, 'success');
+            } else {
+                displayAjaxFlashMessage(data.message, 'error');
+            }
+
+        } catch (error) {
+            console.error('Failed to send test notification:', error);
+            displayAjaxFlashMessage('Failed to send test notification: ' + error, 'error');
+        }
+    }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ['episode', 'movie'].forEach(type => {
+            const formElements = [
+                `title_format_${type}`,
+                `include_overview_${type}`,
+                `include_codec_${type}`,
+                `include_filesize_${type}`,
+                `include_path_${type}`,
+                `include_poster_${type}`,
+                `use_emojis_${type}`
+            ];
+            
+            formElements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => updatePreview(type));
+                }
+            });
+        });
+        
+        switchTab('type');
+
+        const mainForm = document.querySelector('form');
+        if (mainForm) {
+            mainForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const formData = new FormData(mainForm);
+                const payload = {};
+                ['pushover_app_token', 'pushover_user_key', 'action'].forEach(field => {
+                    payload[field] = formData.get(field);
+                });
+
+                ['episode', 'movie'].forEach(type => {
+                    ['title_format', 'include_overview', 'include_codec', 'include_filesize', 'include_path', 'include_poster', 'use_emojis'].forEach(field => {
+                        const fieldName = `${field}_${type}`;
+                        if (field.startsWith('include_') || field.startsWith('use_')) {
+                            payload[fieldName] = formData.has(fieldName);
+                        } else {
+                            payload[fieldName] = formData.get(fieldName);
+                        }
+                    });
+                });
+
+                const defaultEmojis = {
+                    overview: "📝",
+                    codec: "🎞️",
+                    filesize: "💾",
+                    path: "📁"
+                };
+                payload.emoji_overview_episode = defaultEmojis.overview;
+                payload.emoji_codec_episode = defaultEmojis.codec;
+                payload.emoji_filesize_episode = defaultEmojis.filesize;
+                payload.emoji_path_episode = defaultEmojis.path;
+                payload.emoji_overview_movie = defaultEmojis.overview;
+                payload.emoji_codec_movie = defaultEmojis.codec;
+                payload.emoji_filesize_movie = defaultEmojis.filesize;
+                payload.emoji_path_movie = defaultEmojis.path;
+
+
+                try {
+                    const response = await fetch(mainForm.getAttribute('action'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        displayAjaxFlashMessage(data.message, 'success');
+                    } else {
+                        displayAjaxFlashMessage(data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to save settings:', error);
+                    displayAjaxFlashMessage('Failed to save settings: ' + error, 'error');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

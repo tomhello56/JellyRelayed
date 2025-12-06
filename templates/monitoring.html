@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Library Monitoring & Routing{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('main.save') }}" method="POST" id="monitoring-settings-form">
+    <input type="hidden" name="action" value="save_monitoring">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-white"><i class="fa-solid fa-layer-group mr-2"></i>Library Routing</h2>
+            <button type="button" id="scan-libraries-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg transition transform hover:scale-105 inline-block">
+                <i class="fa-solid fa-sync mr-1"></i> Scan Libraries
+            </button>
+        </div>
+
+        {% if not config.libraries %}
+            <p class="text-gray-500 italic">No libraries found. Go to the General page, save your settings, then return here and click "Scan Libraries".</p>
+        {% else %}
+            <div class="space-y-4">
+            {% for name, lib in config.libraries.items() %}
+                <div class="bg-gray-700 p-4 rounded border border-gray-600">
+                    <div class="flex items-center space-x-3">
+                        <!-- Library Name -->
+                        <div class="w-32 truncate" title="{{ name }}">
+                            <span class="font-medium text-white">{{ name }}</span>
+                        </div>
+                
+                        <!-- Toggles -->
+                        <div class="flex items-center space-x-3 w-52">
+                            <div class="flex items-center">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="scan-toggle-{{ name }}" name="lib_scan_enabled_{{ name }}" value="1" class="sr-only peer" {{ 'checked' if lib.scan_enabled else '' }}>
+                                    <div class="relative w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    <span class="ml-2 text-sm">Scan</span>
+                                </label>
+                            </div>
+                            <div id="notify-group-{{ name }}" class="flex items-center">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="notify-toggle-{{ name }}" name="lib_notify_enabled_{{ name }}" value="1" class="sr-only peer" {{ 'checked' if lib.notify_enabled else '' }}>
+                                    <div class="relative w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    <span class="ml-2 text-sm">Notify</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Watch Path (Takes remaining space) -->
+                        <div class="flex-grow">
+                            <select name="lib_path_{{ name }}" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-gray-300 focus:text-white" title="Match incoming file paths to this library by selecting the folder that contains a unique keyword (e.g., 'Tom' or 'Movies').">
+                                <option value="">-- Watch Path --</option>
+                                {% for folder in folders %}
+                                    <option value="{{ folder }}" {{ 'selected' if lib.watch_path == folder else '' }}>{{ folder }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Pushover Device (Reduced size) -->
+                        <div class="w-32">
+                            <input type="text" name="lib_device_{{ name }}" value="{{ lib.device }}" placeholder="Pushover Device" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white" title="Optional: Send notifications for this library only to a specific Pushover device. Leave blank to send to all.">
+                        </div>
+
+                        <!-- Priority (Reduced size) -->
+                        <div class="w-28">
+                            <select name="lib_prio_{{ name }}" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white" title="Sets the Pushover notification priority. Higher priority notifications may bypass quiet hours on your device.">
+                                <option value="-1" {{ 'selected' if lib.priority == -1 else '' }} title="Lowest Priority: No notification or sound.">Low (-1)</option>
+                                <option value="0" {{ 'selected' if lib.priority == 0 else '' }} title="Normal Priority: Standard notification.">Normal (0)</option>
+                                <option value="1" {{ 'selected' if lib.priority == 1 else '' }} title="High Priority: Always notify and play sound.">High (1)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="flex justify-end gap-4">
+        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded shadow-lg transition transform hover:scale-105">
+            Save Monitoring Settings
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block head_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const monitoringSettingsForm = document.getElementById('monitoring-settings-form');
+        if (monitoringSettingsForm) {
+            monitoringSettingsForm.addEventListener('submit', async (event) => {
+                event.preventDefault(); // Prevent default form submission
+
+                const formData = new FormData(monitoringSettingsForm);
+                const payload = {};
+                for (const [key, value] of formData.entries()) {
+                    // Handle checkboxes - FormData only includes them if checked
+                    const inputElement = monitoringSettingsForm.elements[key];
+                    if (inputElement && inputElement.type === 'checkbox') {
+                        payload[key] = inputElement.checked;
+                    } else {
+                        payload[key] = value;
+                    }
+                }
+                
+                // Since unchecked checkboxes are not included by FormData, we must ensure they are in the payload as false
+                const allCheckboxes = monitoringSettingsForm.querySelectorAll('input[type="checkbox"]');
+                allCheckboxes.forEach(checkbox => {
+                    if (!payload.hasOwnProperty(checkbox.name)) {
+                        payload[checkbox.name] = false;
+                    }
+                });
+
+                try {
+                    const response = await fetch(monitoringSettingsForm.getAttribute('action'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        displayAjaxFlashMessage(data.message, 'success');
+                    } else {
+                        displayAjaxFlashMessage(data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to save monitoring settings:', error);
+                    displayAjaxFlashMessage('Failed to save monitoring settings: ' + error, 'error');
+                }
+            });
+        }
+        
+        // Add onchange handler for scan toggles to enable/disable notify toggle
+        const scanToggles = document.querySelectorAll('input[id^="scan-toggle-"]');
+        scanToggles.forEach(toggle => {
+            const libName = toggle.id.replace('scan-toggle-', '');
+            const notifyGroup = document.getElementById(`notify-group-${libName}`);
+            if (notifyGroup) {
+                if (!toggle.checked) {
+                    notifyGroup.style.opacity = '0.5';
+                    notifyGroup.style.pointerEvents = 'none';
+                }
+            }
+            // Add listener to the toggle
+            toggle.addEventListener('change', () => onScanToggleChange(libName));
+        });
+
+        const scanBtn = document.getElementById('scan-libraries-btn');
+        if(scanBtn) {
+            scanBtn.addEventListener('click', triggerScan);
+        }
+    });
+
+    function onScanToggleChange(libName) {
+        const scanToggle = document.getElementById(`scan-toggle-${libName}`);
+        const notifyGroup = document.getElementById(`notify-group-${libName}`);
+        if (notifyGroup) {
+            if (scanToggle.checked) {
+                notifyGroup.style.opacity = '1';
+                notifyGroup.style.pointerEvents = 'auto';
+            } else {
+                notifyGroup.style.opacity = '0.5';
+                notifyGroup.style.pointerEvents = 'none';
+                // Also uncheck the notify toggle when scan is disabled
+                const notifyToggle = document.getElementById(`notify-toggle-${libName}`);
+                if (notifyToggle) {
+                    notifyToggle.checked = false;
+                }
+            }
+        }
+    }
+
+    async function triggerScan() {
+        const scanBtn = document.getElementById('scan-libraries-btn');
+        // Optional: Add a loading state to the button
+        scanBtn.disabled = true;
+        scanBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Scanning...';
+
+        try {
+            const response = await fetch("{{ url_for('main.scan') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            
+            displayAjaxFlashMessage(data.message, data.success ? 'success' : 'error');
+
+            if (data.success) {
+                setTimeout(() => {
+                    location.reload();
+                }, 3000); // Reload after 3 seconds to see changes
+            } else {
+                // Restore button if scan failed
+                scanBtn.disabled = false;
+                scanBtn.innerHTML = '<i class="fa-solid fa-sync mr-1"></i> Scan Libraries';
+            }
+
+        } catch (error) {
+            console.error('Failed to trigger library scan:', error);
+            displayAjaxFlashMessage('Failed to trigger library scan: ' + error, 'error');
+            // Restore button on error
+            scanBtn.disabled = false;
+            scanBtn.innerHTML = '<i class="fa-solid fa-sync mr-1"></i> Scan Libraries';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Webhook Information{% endblock %}
+
+{% block head_scripts %}
+<script>
+    window.appConfig = {
+        base_url: "{{ config.base_url | e }}",
+        security_api_key: "{{ config.security_api_key | e }}"
+    };
+
+    function getWebhookUrl() {
+        const baseUrl = window.appConfig.base_url || window.location.origin;
+        return `${baseUrl}/webhook/${window.appConfig.security_api_key}`;
+    }
+
+    function displayWebhookUrl() {
+        const urlField = document.getElementById('webhook-url');
+        if (urlField) {
+            urlField.value = getWebhookUrl();
+        }
+        // Also update the key field, just in case
+        const keyField = document.getElementById('security_api_key');
+        if (keyField) {
+            keyField.value = window.appConfig.security_api_key;
+        }
+    }
+
+    function copyUrl() {
+        const urlField = document.getElementById('webhook-url');
+        const originalType = urlField.type;
+        urlField.type = 'text'; // Make it text to be selectable
+        urlField.select();
+        document.execCommand('copy');
+        urlField.type = originalType; // Revert back to password
+        
+        const copyIcon = document.getElementById('copy-icon');
+        copyIcon.classList.remove('fa-copy');
+        copyIcon.classList.add('fa-check');
+        setTimeout(() => {
+            copyIcon.classList.remove('fa-check');
+            copyIcon.classList.add('fa-copy');
+        }, 2000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        displayWebhookUrl();
+
+        const regenerateForm = document.getElementById('regenerate-api-key-form');
+        if (regenerateForm) {
+            regenerateForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const formData = new FormData(regenerateForm);
+                const payload = {
+                    action: formData.get('action')
+                };
+
+                try {
+                    console.log('Fetching URL:', regenerateForm.getAttribute('action'));
+                    const response = await fetch(regenerateForm.getAttribute('action'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    displayAjaxFlashMessage(data.message, data.success ? 'success' : 'error');
+
+                    if (data.success && data.new_key) {
+                        // Update the global config and the input fields
+                        window.appConfig.security_api_key = data.new_key;
+                        displayWebhookUrl();
+                    }
+                } catch (error) {
+                    console.error('Failed to regenerate API key:', error);
+                    displayAjaxFlashMessage('Failed to regenerate API key: ' + error, 'error');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+    <h2 class="text-xl font-semibold mb-4 text-white"><i class="fa-solid fa-key mr-2"></i>Security API Key</h2>
+    <div class="space-y-4 text-gray-300">
+        <p>This key is used to secure your webhook URL. Clicking the button below will immediately generate and save a new key, invalidating the old one.</p>
+        <form action="{{ url_for('main.save') }}" method="POST" id="regenerate-api-key-form" class="flex items-center space-x-4">
+            <input type="hidden" name="action" value="regenerate_api_key">
+             <div class="relative flex-grow">
+                <input type="password" id="security_api_key" readonly value="{{ config.security_api_key }}" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white focus:border-purple-500 focus:outline-none pr-10">
+                <button type="button" onclick="toggleVisibility('security_api_key')" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-white focus:outline-none">
+                    <i id="icon-security_api_key" class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+            <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded shadow-lg flex-shrink-0" title="Regenerate and save a new API key">
+                <i class="fa-solid fa-sync mr-2"></i>Regenerate Key
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+    <h2 class="text-xl font-semibold mb-4 text-white"><i class="fa-solid fa-link mr-2"></i>Webhook Setup</h2>
+    <p class="text-yellow-400 text-sm mb-4">
+        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Important: Ensure you disable Jellyfin/Emby Connect scanning within Sonarr and Radarr. JellyRelayed handles this for you!
+    </p>
+    <div class="space-y-4 text-gray-300">
+        <p>Add the following URL to Sonarr/Radarr in <span class="font-mono text-purple-400">Settings > Connect > Add Webhook</span>. This URL is now secured with your API key.</p>
+        <div>
+            <label class="block text-xs uppercase text-gray-400 mb-1">Your Secure Webhook URL</label>
+            <div class="relative">
+                <input type="password" id="webhook-url" readonly class="w-full bg-gray-900 border border-gray-600 rounded p-2 font-mono text-sm pr-20">
+                <div class="absolute inset-y-0 right-0 flex items-center">
+                    <button type="button" onclick="toggleVisibility('webhook-url')" class="px-3 text-gray-400 hover:text-white focus:outline-none">
+                        <i id="icon-webhook-url" class="fa-solid fa-eye"></i>
+                    </button>
+                    <button type="button" onclick="copyUrl()" class="px-3 text-gray-400 hover:text-white focus:outline-none">
+                        <i id="copy-icon" class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+                <h3 class="font-semibold text-lg mb-2 text-white">Sonarr Triggers</h3>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Enable: <span class="font-mono text-green-400">On Import</span> & <span class="font-mono text-green-400">On Upgrade</span></li>
+                    <li class="text-gray-500">These triggers provide all info to JellyRelayed.</li>
+                    <li class="text-gray-500">Disable: <span class="font-mono">On Grab</span></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-2 text-white">Radarr Triggers</h3>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Enable: <span class="font-mono text-green-400">On Import</span> & <span class="font-mono text-green-400">On Upgrade</span></li>
+                    <li class="text-gray-500">These triggers provide all info to JellyRelayed.</li>
+                    <li class="text-gray-500">Disable: <span class="font-mono">On Grab</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

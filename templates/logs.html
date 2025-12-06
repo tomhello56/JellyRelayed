@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Application Logs{% endblock %}
+
+{% block content %}
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-white"><i class="fa-solid fa-file-alt mr-2"></i>Application Logs</h2>
+        <a href="{{ url_for('main.logs') }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg transition transform hover:scale-105">
+            <i class="fa-solid fa-sync mr-1"></i> Refresh
+        </a>
+    </div>
+    <div class="bg-gray-900 rounded p-4 font-mono text-xs text-gray-300 whitespace-pre-wrap h-96 overflow-y-auto">
+        {% if logs %}
+            {{ logs }}
+        {% else %}
+            No log entries found.
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

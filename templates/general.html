@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Jellyfin Settings{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('main.save') }}" method="POST" id="general-settings-form">
+    <input type="hidden" name="action" value="save_general">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+        <h2 class="text-xl font-semibold mb-4 text-white"><i class="fa-solid fa-gear mr-2"></i>Jellyfin Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div>
+                <label class="block text-xs uppercase text-gray-400 mb-1">Jellyfin URL</label>
+                <input type="text" name="jellyfin_url" value="{{ config.jellyfin_url }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:border-purple-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs uppercase text-gray-400 mb-1">Base URL <span class="normal-case text-gray-500">(Optional)</span></label>
+                <input type="text" name="base_url" value="{{ config.base_url }}" placeholder="e.g., http://192.168.1.100:5000" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:border-purple-500 focus:outline-none">
+            </div>
+            
+            <div>
+                <label class="block text-xs uppercase text-gray-400 mb-1">Jellyfin API Key</label>
+                <div class="relative">
+                    <input type="password" id="jellyfin_api_key" name="jellyfin_api_key" value="{{ config.jellyfin_api_key }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:border-purple-500 focus:outline-none pr-10">
+                    <button type="button" onclick="toggleVisibility('jellyfin_api_key')" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-white focus:outline-none">
+                        <i id="icon-jellyfin_api_key" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex justify-end gap-4">
+        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded shadow-lg transition transform hover:scale-105">
+            Save Jellyfin Settings
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block head_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const jellyfinSettingsForm = document.getElementById('general-settings-form');
+        if (jellyfinSettingsForm) {
+            jellyfinSettingsForm.addEventListener('submit', async (event) => {
+                event.preventDefault(); // Prevent default form submission
+
+                const formData = new FormData(jellyfinSettingsForm);
+                const payload = {};
+                for (const [key, value] of formData.entries()) {
+                    payload[key] = value;
+                }
+
+                try {
+                    const response = await fetch(jellyfinSettingsForm.getAttribute('action'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Assuming displayAjaxFlashMessage is globally available (will be moved to base.html)
+                        displayAjaxFlashMessage(data.message, 'success');
+                    } else {
+                        displayAjaxFlashMessage(data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to save Jellyfin settings:', error);
+                    displayAjaxFlashMessage('Failed to save Jellyfin settings: ' + error, 'error');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}About JellyRelayed{% endblock %}
+
+{% block content %}
+<div class="bg-gray-800 p-8 rounded-lg shadow-lg mb-6 text-gray-300">
+
+    <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
+        <h2 class="text-3xl font-bold text-white">
+            <i class="fa-solid fa-info-circle mr-3 text-purple-400"></i>About JellyRelayed
+        </h2>
+        <span class="text-sm text-gray-500">Version 1.0.0</span>
+    </div>
+    
+    <p class="mb-8 text-lg">
+        JellyRelayed is a lightweight webhook relay server designed to create a seamless bridge between your media managers (Sonarr, Radarr) and your notification clients. It intelligently processes webhooks to send rich, customizable <span class="font-semibold text-purple-400">Pushover</span> notifications when new media is added to your library.
+    </p>
+
+    <!-- Features Section -->
+    <div class="mb-8">
+        <h3 class="text-2xl font-semibold text-white mb-4">Key Features</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Feature Item -->
+            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <h4 class="font-bold text-purple-400 mb-2"><i class="fa-solid fa-key w-6 mr-1"></i>Secure Webhook Endpoint</h4>
+                <p class="text-sm">Provides a unique, secure URL with a regeneratable API key to receive webhooks from Sonarr and Radarr.</p>
+            </div>
+            <!-- Feature Item -->
+            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <h4 class="font-bold text-purple-400 mb-2"><i class="fa-solid fa-sliders w-6 mr-1"></i>Customizable Notifications</h4>
+                <p class="text-sm">Tailor notification titles and bodies. Choose to include overviews, file paths, codecs, file sizes, and poster art.</p>
+            </div>
+            <!-- Feature Item -->
+            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <h4 class="font-bold text-purple-400 mb-2"><i class="fa-solid fa-eye w-6 mr-1"></i>Live Previews & Testing</h4>
+                <p class="text-sm">A real-time preview updates as you type, and a "Test" button lets you send a real notification with mock data before saving.</p>
+            </div>
+            <!-- Feature Item -->
+            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <h4 class="font-bold text-purple-400 mb-2"><i class="fa-solid fa-face-smile w-6 mr-1"></i>Emoji Support</h4>
+                <p class="text-sm">Easily enable or disable descriptive emojis for different notification fields with a single toggle.</p>
+            </div>
+            <!-- Feature Item -->
+            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <h4 class="font-bold text-purple-400 mb-2"><i class="fa-solid fa-bolt w-6 mr-1"></i>AJAX Interface</h4>
+                <p class="text-sm">All settings are saved in the background without page reloads, providing a smooth and modern user experience.</p>
+            </div>
+            <!-- Feature Item -->
+            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <h4 class="font-bold text-purple-400 mb-2"><i class="fa-solid fa-desktop w-6 mr-1"></i>Library Monitoring</h4>
+                <p class="text-sm">Configure which Jellyfin libraries are monitored and how they trigger scans and notifications (future-enhancement ready).</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How it Works Section -->
+    <div class="mb-8">
+        <h3 class="text-2xl font-semibold text-white mb-4">How It Works</h3>
+        <ol class="relative border-l border-gray-700 space-y-6 pl-6">
+            <li class="flex items-start">
+                <span class="absolute flex items-center justify-center w-8 h-8 bg-purple-900 rounded-full -left-4 ring-4 ring-gray-800 text-purple-300">1</span>
+                <div class="ml-4">
+                    <h4 class="font-bold text-white">Media Import</h4>
+                    <p class="text-sm">Sonarr or Radarr finishes downloading and importing a new file.</p>
+                </div>
+            </li>
+            <li class="flex items-start">
+                <span class="absolute flex items-center justify-center w-8 h-8 bg-purple-900 rounded-full -left-4 ring-4 ring-gray-800 text-purple-300">2</span>
+                <div class="ml-4">
+                    <h4 class="font-bold text-white">Webhook Trigger</h4>
+                    <p class="text-sm">An 'On Import' or 'On Upgrade' webhook is sent to your secure JellyRelayed URL.</p>
+                </div>
+            </li>
+            <li class="flex items-start">
+                <span class="absolute flex items-center justify-center w-8 h-8 bg-purple-900 rounded-full -left-4 ring-4 ring-gray-800 text-purple-300">3</span>
+                <div class="ml-4">
+                    <h4 class="font-bold text-white">Notification Sent</h4>
+                    <p class="text-sm">JellyRelayed formats a message based on your settings and sends it to your devices via Pushover.</p>
+                </div>
+            </li>
+        </ol>
+    </div>
+
+    <!-- Resources Section -->
+    <div>
+        <h3 class="text-2xl font-semibold text-white mb-4">Resources & Acknowledgements</h3>
+        <p class="mb-4">For more information, to report an issue, or to contribute, please visit the official GitHub repository.</p>
+        <a href="https://github.com/tomhello56/JellyRelayed" target="_blank" rel="noopener noreferrer" class="inline-block bg-gray-900/50 hover:bg-gray-700/50 text-white font-bold py-3 px-5 rounded-lg shadow-lg transition border border-gray-700">
+            <i class="fa-brands fa-github mr-2"></i>
+            tomhello56/JellyRelayed
+        </a>
+    </div>
+
+</div>
+{% endblock %}

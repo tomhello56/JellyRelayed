@@ -1,0 +1,74 @@
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left Side: Settings -->
+    <div>
+        <!-- Notification Customization -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-white"><i class="fa-solid fa-paint-brush mr-2"></i>Notification Customization</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-400 mb-1">{{ type | capitalize }} Title Format</label>
+                    <input type="text" id="title_format_{{ type }}" name="title_format_{{ type }}" value="{{ config.notification_options[type].title_format }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-mono text-sm">
+                </div>
+                <p class="text-xs text-gray-400">
+                    Available placeholders for {{ type }}: <br>
+                    {% if type == 'episode' %}
+                        <span class="font-mono text-purple-300">{prefix}</span> <span class="font-mono text-purple-300">{series_name}</span> <span class="font-mono text-purple-300">{season_num}</span> <span class="font-mono text-purple-300">{episode_num}</span> <span class="font-mono text-purple-300">{episode_name}</span>
+                    {% else %}
+                        <span class="font-mono text-purple-300">{prefix}</span> <span class="font-mono text-purple-300">{movie_name}</span> <span class="font-mono text-purple-300">{movie_year}</span>
+                    {% endif %}
+                </p>
+                <hr class="border-gray-700">
+                <label class="block text-xs uppercase text-gray-400 mb-1">Include in Notification Body:</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="include_overview_{{ type }}" name="include_overview_{{ type }}" class="form-checkbox bg-gray-700 border-gray-600 text-purple-500" {{ 'checked' if config.notification_options[type].include_overview }}>
+                        <span>Overview/Description</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="include_codec_{{ type }}" name="include_codec_{{ type }}" class="form-checkbox bg-gray-700 border-gray-600 text-purple-500" {{ 'checked' if config.notification_options[type].include_codec }}>
+                        <span>Codec</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="include_filesize_{{ type }}" name="include_filesize_{{ type }}" class="form-checkbox bg-gray-700 border-gray-600 text-purple-500" {{ 'checked' if config.notification_options[type].include_filesize }}>
+                        <span>File Size</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="include_path_{{ type }}" name="include_path_{{ type }}" class="form-checkbox bg-gray-700 border-gray-600 text-purple-500" {{ 'checked' if config.notification_options[type].include_path }}>
+                        <span>File Path</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="include_poster_{{ type }}" name="include_poster_{{ type }}" class="form-checkbox bg-gray-700 border-gray-600 text-purple-500" {{ 'checked' if config.notification_options[type].include_poster }}>
+                        <span>Poster Image</span>
+                    </label>
+                </div>
+                
+                <hr class="border-gray-700 mt-4 mb-4">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="use_emojis_{{ type }}" name="use_emojis_{{ type }}" class="form-checkbox bg-gray-700 border-gray-600 text-purple-500" {{ 'checked' if config.notification_options[type].use_emojis }}>
+                    <span>Use Emojis</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Preview -->
+    <div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg sticky top-6">
+            <h2 class="text-xl font-semibold mb-4 text-white"><i class="fa-solid fa-eye mr-2"></i>Live Preview</h2>
+            
+            <div class="bg-gray-900 rounded-lg p-3 shadow-md border border-gray-700">
+                <h3 id="preview-title-{{ type }}" class="text-white font-bold text-base mb-1"></h3>
+                <div id="preview-body-content-{{ type }}" class="text-gray-300 text-sm mb-2"></div>
+                <div id="preview-details-{{ type }}" class="text-gray-400 text-xs space-y-1"></div>
+                <img id="preview-poster-display-{{ type }}" alt="Fictional Poster" class="w-full h-auto rounded-lg mb-2 hidden">
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="lg:col-span-2 flex justify-end gap-4 mt-6">
+        <button type="button" onclick="sendTestNotification('{{ type }}')" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded shadow-lg transition transform hover:scale-105">
+            <i class="fa-solid fa-paper-plane mr-1"></i> Test {{ type | capitalize }}
+        </button>
+    </div>
+</div>
